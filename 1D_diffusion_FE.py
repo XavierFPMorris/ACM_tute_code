@@ -12,10 +12,10 @@ num_iter = 1000*3
 
 x = np.linspace(0, Ln, Nx + 1)
 t = np.linspace(0, dt*Nt, Nt + 1)
-print(x)
+
 dx = x[2]-x[1]
 dt = t[2]-t[1]
-print(dt)
+
 
 temp = np.ones(len(x)-1)
 
