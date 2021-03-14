@@ -4,8 +4,8 @@ from matplotlib.animation import FuncAnimation
 import time
 
 Nx = 100
-Nt = 1000
-dt = 0.1
+Nt = 100
+dt = 0.5
 Ln = 1
 
 num_iter = 1000*3
@@ -36,7 +36,7 @@ val[::-1].sort()
 #plt.show()
 
 u = np.sin(x)
-u = np.exp(-(x-Ln/2)**2/0.01)/10
+u = np.exp(-(x-Ln/2)**2/0.1)
 u_n[0,:] = u
 
 mn = np.mean(u)
@@ -46,7 +46,7 @@ mn = np.mean(u)
 
 for i in range(1,num_iter):
     #u_n[i,:] = (1-dt/2*L) @ np.linalg.inv(1+dt/2*L) @ u
-    u_n[i,:] = np.linalg.solve((1/dt + L/2), (1/dt-L/2)@u)
+    u_n[i,:] = np.linalg.solve((np.eye(len(x)) - dt*L/(2)), (np.eye(len(x))+dt*L/(2))@u)
     u = u_n[i,:]
 
 fig = plt.figure()
