@@ -1,16 +1,18 @@
 import matplotlib.pyplot as plt 
 import numpy as np
 import scipy.integrate as sciInt
-from scipy.fftpack import fft, ifft
+
  
 #grid points
-N = 300
+N = 100*3
 
 L = 4*np.pi
 
-x = np.linspace(0,L,N+1)
+x = np.linspace(0,L,N)
 
 del_x = x[1]-x[0]
+
+print(1/del_x)
 
 lambda_min = 2*(x[1]-x[0])
 
@@ -21,13 +23,16 @@ del_k = 2*np.pi/L
 k = np.arange(-k_max, k_max+del_k, del_k)
 
 #print((k))
-a = 1
+a = 0.5
 b = 4
 initial_space = a*np.exp(-b*(x - L/2)**2)
 initial_space_deriv = -2*a*b*(x-L/2)*np.exp(-b*(x-L/2)**2)
 initial_space_deriv_2 = a*b*(4*b*x**2-4*b*L*x+b*L**2-2)*np.exp(-b*(x-L/2)**2)
 initial_space_deriv_3 = -a*b**2*(2*x-L)*(4*b*x**2-4*b*L*x+b*L**2-6)*np.exp(-b*(x-L/2)**2)
 non_lin = initial_space*initial_space_deriv
+
+beta = 10
+initial_soliton = beta/2*np.reciprocal( np.cosh( np.sqrt(beta)/2 *(x-L/2))**2)
 # plt.plot(x,initial_space)
 # plt.plot(x,initial_space_deriv)
 # plt.plot(x,non_lin)
@@ -52,12 +57,22 @@ non_lin = initial_space*initial_space_deriv
 # plt.show()
 # plt.plot(np.fft.ifft(np.fft.fft(initial_space, n = len(k))))
 # plt.show()
-
+    # n = len(x)
+    
+    # a_k = np.fft.fft(u,n = n)  
+        
+    # k = np.fft.fftfreq(len(x),d=0.001)
+            
+    # return (1j*k)**N * a_k * np.exp(2*np.pi*k/n)
 ## Generate linear derivatives from space input, fourier output 
 
 def spectral_deriv(u, p, k):
 
-    return (1j)**p * np.fft.ifftshift(k)**p * np.fft.fft(u, n = len(k))
+    return (1j)**p *(np.fft.fftfreq(N))**p * np.fft.fft(u)#* np.exp(2*np.pi*np.fft.fftfreq(N)/N)
+
+def unshifted_spectral_deriv(u,p,k):
+
+    return (1j)**p * (k)**p * np.fft.fft(u, n = len(k))
 
 
 ## Generate non-linear term
@@ -79,8 +94,19 @@ def spectral_deriv(u, p, k):
 def L_calc(u, k):
     return -1*spectral_deriv(u, 3, k)
 
+
+
 def N_calc(u, k):
     return -6*0.5*spectral_deriv(u**2, 1, k)
+
+
+def uL_calc(u, k):
+    return -1*unshifted_spectral_deriv(u, 3, k)
+
+
+
+def uN_calc(u, k):
+    return -6*0.5*unshifted_spectral_deriv(u**2, 1, k)
 
 
 u_f_test = np.fft.fft(initial_space, n = len(k))
@@ -88,13 +114,39 @@ u_deriv_f_test = np.fft.fft(initial_space_deriv, n = len(k))
 u_deriv_f_test_2 = np.fft.fft(initial_space_deriv_2, n = len(k))
 non_lin_test = np.fft.fft(non_lin, n = len(k))
 
-del_t = 0.005
+del_t = 0.05
 
 # print(np.abs(spectral_deriv(initial_space, 0, k))-np.abs(u_f_test))
 # print(np.abs(spectral_deriv(initial_space, 1, k))-np.abs(u_deriv_f_test))
 # print(np.abs(spectral_deriv(initial_space, 2, k))-np.abs(u_deriv_f_test_2))
 #print(np.abs(N_bash(non_lin, k, del_x)-np.abs(non_lin_test)))
 
+soliton_deriv = -(beta**(3/2)*np.reciprocal(np.cosh((np.sqrt(beta)*(x-L/2))/2))**2*np.tanh((np.sqrt(beta)*(x-L/2))/2))/2
+
+
+# plt.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_soliton, 3, k))))
+
+# plt.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_soliton, 3, k))))
+
+# plt.show()
+
+
+### THIS WORKS ####
+
+fig, ((ax1, ax2), (ax3,ax4))  = plt.subplots(2,2)
+ax1.plot(x, initial_soliton)
+ax1.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_soliton, 0, k))))
+
+ax2.plot(x,soliton_deriv)
+ax2.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_soliton, 1, k))))
+
+
+ax3.plot(x, initial_soliton*soliton_deriv)
+ax3.plot(x, 0.5*np.real(np.fft.ifft(spectral_deriv(initial_soliton**2, 1 ,k))))
+
+plt.show()
+
+#print(soliton_deriv/np.real(np.fft.ifft(spectral_deriv(initial_soliton, 1, k))))
 
 #### THIS WORKS ####
 
@@ -127,26 +179,32 @@ del_t = 0.005
 
 #print(N_bash(u_f_test, k, del_x))
 
-nsteps = 10
+nsteps = 1000
 
 U = np.zeros((nsteps, len(k)),dtype=np.complex_)
 
-U[0,:] = initial_space
+U[0,:] = initial_soliton
+U[1,:] =  (np.fft.ifft( np.fft.fft(initial_soliton) + L_calc(U[0,:],k)*del_t + N_calc(U[0,:],k)*del_t ))
 
-U[1,:] =  initial_space + np.fft.ifft(L_calc(U[0,:],k))*del_t + np.fft.ifft(N_calc(U[0,:],k))*del_t 
-
+print(U[0,:] - U[1,:])
 for i in range(2, nsteps):
-    t_L = np.fft.ifft((L_calc(U[i-1,:],k)))
-    t_N0 = np.fft.ifft((N_calc(U[i-1,:], k)))
-    t_N1 = np.fft.ifft((N_calc(U[i-2,:], k)))
+    t_L = (L_calc(U[i-1,:],k))
+    t_N0 = (N_calc(U[i-1,:], k))
+    t_N1 = (N_calc(U[i-2,:], k))
     #U_temp = np.zeros(len(k),dtype=np.complex_)
-    U[i,:] = (np.reciprocal(1-del_t/2*t_L)*( (1 + del_t/2*t_L)*(U[i-1,:]) + 3/2*del_t*t_N0 - 1/2*del_t*t_N1))
+    U[i,:] = np.fft.ifft( (np.reciprocal(1-del_t/2*t_L) * ( (1 + del_t/2*t_L)* (np.fft.fft(U[i-1,:])) + 3/2*del_t*t_N0 - 1/2*del_t*t_N1)))
+    #    U[i,:] = np.fft.ifft( np.fft.ifftshift(np.reciprocal(1-del_t/2*t_L) * ( (1 + del_t/2*t_L)* np.fft.fftshift(np.fft.fft(U[i-1,:])) + 3/2*del_t*t_N0 - 1/2*del_t*t_N1)))
 
+#plt.plot(U[0,:])
+#plt.plot(U[1,:])
+
+#plt.show()
 
 # #print(U)
 
 
-
+#print(k)
+#print(len(initial_soliton)*np.fft.fftshift(np.fft.fftfreq(len(initial_soliton))))
 
 
 
@@ -162,5 +220,5 @@ def animate(i):
     ax1.plot(x,np.real(U[i,:]))
 
 
-ani = FuncAnimation(fig, animate, frames = list(range(0,nsteps)), interval = 1000)
+ani = FuncAnimation(fig, animate, frames = list(range(0,nsteps)), interval = 1)
 plt.show()
