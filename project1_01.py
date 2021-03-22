@@ -19,6 +19,8 @@ dx = x[1] - x[0]
 #wavenumber? discretisation
 k = fftfreq(num_points)
 
+print(k)
+
 
 #initial Gaussian profile
 a = 0.5
@@ -26,8 +28,8 @@ b = length/2
 gauss_i = a*exp(-b*(x - length/2)**2)
 
 #initial soliton solution profile
-beta = 5
-soliton_i = beta/2*cosh( (beta)/2 *(x-length/2))**-2
+beta = 1
+soliton_i = beta/2*cosh( sqrt(beta)/2 *(x-length/2))**-2
 
 #nth derivative in fourier space, space input 
 def f_deriv(u,n):
@@ -52,7 +54,7 @@ U = np.zeros((nsteps, num_points), dtype = np.complex_)
 
 #set initial profile 
 
-U[0,:] = gauss_i
+U[0,:] = soliton_i
 
 #perform one FE step
 
@@ -64,10 +66,10 @@ for i in range(2, nsteps):
     L = L_(U[i-1, :])
     Ni = N_(U[i-1,:])
     Ni1 = N_(U[i-2,:])
-    K = (1-dt/2*L)**(-1) * ( (1+dt/2*L)*fft(U[i-1,:]) + 3/2*dt*Ni - 1/2*dt*Ni1 )
+    U_k = (1-dt/2*L)**(-1) * ( (1+dt/2*L)*fft(U[i-1,:]) + 3/2*dt*Ni - 1/2*dt*Ni1 )
     #anti-aliasing
-    K[abs(k) > num_points/3] = 0
-    U[i,:] = ifft(K)
+    U_k[abs(k*num_points) > num_points/3] = 0
+    U[i,:] = ifft(U_k)
 
 #plotting 
 
