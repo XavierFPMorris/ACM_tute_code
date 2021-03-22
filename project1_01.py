@@ -29,7 +29,7 @@ gauss_i = a*exp(-b*(x - length/2)**2)
 
 #initial soliton solution profile
 beta = 1
-soliton_i = beta/2*cosh( sqrt(beta)/2 *(x-length/2))**-2
+soliton_i = beta/2*cosh( sqrt(beta)/2 *(x-length/4))**-2
 
 #nth derivative in fourier space, space input 
 def f_deriv(u,n):
@@ -44,7 +44,7 @@ def N_(u):
     return -6*(0.5*f_deriv(u**2, 1))
 
 #time step
-dt = 0.1
+dt = 0.01
 
 #time steps 
 nsteps = 1000*2
@@ -66,7 +66,7 @@ for i in range(2, nsteps):
     L = L_(U[i-1, :])
     Ni = N_(U[i-1,:])
     Ni1 = N_(U[i-2,:])
-    U_k = (1-dt/2*L)**(-1) * ( (1+dt/2*L)*fft(U[i-1,:]) + 3/2*dt*Ni - 1/2*dt*Ni1 )
+    U_k = (1-dt/2*L)**(-1) * ( (fft(U[i-1,:])+dt/2*L) + 3/2*dt*Ni - 1/2*dt*Ni1 )
     #anti-aliasing
     U_k[abs(k*num_points) > num_points/3] = 0
     U[i,:] = ifft(U_k)
@@ -78,6 +78,7 @@ ax1 = fig.add_subplot(1,1,1)
 
 def animate(i):
     ax1.clear()
+    ax1.plot(x, soliton_i)
     ax1.plot(x,np.real(U[i,:]))
 
 
