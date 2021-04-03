@@ -4,7 +4,7 @@ from math import pi
 from numpy.fft import fft, fftfreq, ifft
 from matplotlib.animation import FuncAnimation
 
-
+### Full integrator for Ex 1 Problems
 def KDV_INT(N, length, dt, nsteps, IC):
     ### SETUP ###
 
@@ -65,7 +65,7 @@ def evo_plot(x, U, nsteps):
 
     plt.show()
 
-
+### Full integrator for Ex 2 Problems
 def KDV_INT_2(N, length, dt, nsteps, IC, beta, alpha, nu):
     ### SETUP ###
 
@@ -87,3 +87,13 @@ def KDV_INT_2(N, length, dt, nsteps, IC, beta, alpha, nu):
     U = CNAB(IC, nsteps, N, L_, N_, dt)
 
     return U
+
+### QUAD INTERP HELPER
+def quad_interp(ut, ind):
+    x_1 = ind - 1
+    x = ind
+    x1 = ind + 1
+    u_1 = ut[x_1]
+    u = ut[x]
+    u1 = ut[x1]
+    return x - (u1 - u_1)/(2*(u1 - 2*u + u_1))
