@@ -2,9 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate as sciInt
 
+
+y = np.array([1, 2, 3])
+print(y**2)
  
 #grid points
-N = 100*3
+N = 100*8
 
 L = 4*np.pi
 
@@ -23,7 +26,7 @@ del_k = 2*np.pi/L
 k = np.arange(-k_max, k_max+del_k, del_k)
 
 #print((k))
-a = 0.5
+a = 1
 b = 4
 initial_space = a*np.exp(-b*(x - L/2)**2)
 initial_space_deriv = -2*a*b*(x-L/2)*np.exp(-b*(x-L/2)**2)
@@ -68,7 +71,7 @@ initial_soliton = beta/2*np.reciprocal( np.cosh( np.sqrt(beta)/2 *(x-L/2))**2)
 
 def spectral_deriv(u, p, k):
 
-    return (1j)**p *(np.fft.fftfreq(N))**p * np.fft.fft(u)#* np.exp(2*np.pi*np.fft.fftfreq(N)/N)
+    return (1j)**p *(np.fft.fftfreq(N)*N/2)**p * np.fft.fft(u)#* np.exp(2*np.pi*np.fft.fftfreq(N)/N)
 
 def unshifted_spectral_deriv(u,p,k):
 
@@ -148,27 +151,27 @@ plt.show()
 
 #print(soliton_deriv/np.real(np.fft.ifft(spectral_deriv(initial_soliton, 1, k))))
 
-#### THIS WORKS ####
+### THIS WORKS ####
 
-# fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2,2)
+fig, ((ax1,ax2), (ax3,ax4)) = plt.subplots(2,2)
 
-# plot1, = ax1.plot(x, initial_space, label = 'actual 0th')
-# plot2, = ax1.plot(x, (np.real(np.fft.ifft(spectral_deriv(initial_space, 0, k)))), label = 'my 0th')
-# ax1.legend(loc="upper right")
+plot1, = ax1.plot(x, initial_space, label = 'actual 0th')
+plot2, = ax1.plot(x, (np.real(np.fft.ifft(spectral_deriv(initial_space, 0, k)))), label = 'my 0th')
+ax1.legend(loc="upper right")
 
-# plot3, = ax2.plot(x, initial_space_deriv, label = 'actual 1st')
-# plot4, = ax2.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 1, k))), label = 'my 1st')
-# ax2.legend(loc="upper right")
+plot3, = ax2.plot(x, initial_space_deriv, label = 'actual 1st')
+plot4, = ax2.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 1, k))), label = 'my 1st')
+ax2.legend(loc="upper right")
 
-# plot5, = ax3.plot(x, initial_space_deriv_2, label = 'actual 2nd')
-# plot6, = ax3.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 2, k))), label = 'my 2nd')
-# ax3.legend(loc="upper right")
+plot5, = ax3.plot(x, initial_space_deriv_2, label = 'actual 2nd')
+plot6, = ax3.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 2, k))), label = 'my 2nd')
+ax3.legend(loc="upper right")
 
-# plot7, = ax4.plot(x, initial_space_deriv_3, label = 'actual 3rd')
-# plot8, = ax4.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 3, k))), label = 'my 3rd')
-# ax4.legend(loc="upper right")
+plot7, = ax4.plot(x, initial_space_deriv_3, label = 'actual 3rd')
+plot8, = ax4.plot(x, np.real(np.fft.ifft(spectral_deriv(initial_space, 3, k))), label = 'my 3rd')
+ax4.legend(loc="upper right")
 
-# plt.show()
+plt.show()
 
 
 #### THIS WORKS ####

@@ -6,21 +6,36 @@ from numpy import sqrt, exp, cosh as sqrt, exp, cosh
 from matplotlib.animation import FuncAnimation
 import time
 
-num_points = 256
+# num_points = 256
 
-length = 20
+# length = 20
 
-#space discretisation
-x = np.linspace(0,length,num_points)
+# #space discretisation
+# x = np.linspace(0,length,num_points)
 
-dx = x[1] - x[0]
+# dx = x[1] - x[0]
 
-#print(dx - length/(num_points-1))
-#wavenumber? discretisation
-k = fftfreq(num_points)
-print(k)
+# #print(dx - length/(num_points-1))
+# #wavenumber? discretisation
+# k = fftfreq(num_points)
+# print(k)
 #print(dx)
 
+N =100
+
+length = 50
+
+
+### space discretisation 
+dx = length/N
+x = dx*np.arange(N)
+
+
+### wavenumber discretisation
+
+k = np.fft.fftfreq(N)*N
+# k = np.fft.ifftshift(k)
+k = k*2*np.pi/length
 
 
 
@@ -32,44 +47,49 @@ b = 4
 gauss_i = a*exp(-b*(x - length/2)**2)
 
 #initial soliton solution profile
-beta = 0.05
-soliton_i = beta/2 * cosh( sqrt(beta)/2 *(x-length/2))**-2
+beta = 0.5
+soliton_i = beta/2 * cosh( sqrt(beta)/2 *(x-length/2))**(-2.)
 
 #initial cos profile
 sin_i = np.sin(2*np.pi/length*x)
 
-XX = fft(sin_i)*1j*k*num_points
-XXX = fft(sin_i)*(1j*k*num_points)**2
-XX[k*num_points > num_points/3] = 0
-XXX[k*num_points > num_points/3] = 0
-plt.plot( ifft(XX))
-plt.plot(ifft(XXX))
-plt.plot(sin_i)
-plt.show()
+# XX = fft(sin_i)*1j*k*num_points
+# XXX = fft(sin_i)*(1j*k*num_points)**2
+# XX[k*num_points > num_points/3] = 0
+# XXX[k*num_points > num_points/3] = 0
+# plt.plot( ifft(XX))
+# plt.plot(ifft(XXX))
+# plt.plot(sin_i)
+# plt.show()
 
 #nth derivative in fourier space, space input 
 def f_deriv(u,n):
-    return ((1j*k)**n)#*fft(u)
+    return ((1j*k)**n)*fft(u)
 
 #linear part of time derivative
-def L_(u):
+def L__(u):
     return -1*f_deriv(u,3)
 
 #non linear part of time derivative
 def N_(u):
-    return -6*(0.5*f_deriv(u**2, 1))
+    return -6*(0.5*fft(u**2))*1j
+
+
+
+def non_lin(y):
+    return  .5*1j*k*fft(ifft(y,axis=0)**2.,axis=0) * 6
 
 #plt.plot(x, ifft(L_(gauss_i)))
 #plt.show()
 
 #time step
-dt = 0.5
+dt = 0.0001
 
 #time steps 
-nsteps = 1000*1
+nsteps = 1000
 
 #evolution matrix, time x space 
-U = np.zeros((nsteps, num_points), dtype = np.complex_)
+U = np.zeros((nsteps, N), dtype = np.complex_)
 
 #set initial profile 
 
@@ -77,9 +97,11 @@ U[0,:] = soliton_i
 
 #perform one FE step
 
-L_new = (-1j*k)**3*num_points
-print(L_new)
-U[1,:] = ifft( fft(U[0,:])  + dt*L_new)#+ dt*N_(U[0,:]) )
+L_ = -(1j*k)**3
+
+#print(L_new)
+
+U[1,:] = ifft( fft(U[0,:])  + dt*L_*fft(U[0,:]) +  dt*N_(U[0,:]) )    #+ dt*N_(U[0,:]) )
 
 
 
@@ -94,9 +116,13 @@ for i in range(2, nsteps):
     #Ni = N_(U[i-1,:])
     #Ni1 = N_(U[i-2,:])
     #U_k = (1-dt/2*L)**(-1) *  ( fft(U[i-1,:])*(1+dt/2*L) + 3/2*dt*Ni - 1/2*dt*Ni1 )
-    U_k = (1-dt/2*L_new)**(-1) *  (fft(U[i-1,:])*(1+dt/2*L_new) + 1/dx*dt*6*3/2*1/2*(-1j)*k*fft((U[i-1,:])**2) - 1/dx*dt*6*1/2*1/2*(-1j)*k*fft((U[i-2,:])**2))
+    #U_k = (1-dt/2*L_new)**(-1) *  (fft(U[i-1,:])*(1+dt/2*L_new) + 1/dx*dt*6*3/2*1/2*(-1j)*k*fft((U[i-1,:])**2) - 1/dx*dt*6*1/2*1/2*(-1j)*k*fft((U[i-2,:])**2))
+    
+    U_k = (1-dt/2*L_)**(-1)    *    (   fft(U[i-1,:])*(1+dt/2*L_) + 3/2*dt*N_(U[i-1,:]) - 1/2*dt*N_(U[i-2,:])   )
+
     #anti-aliasing
-    U_k[abs(k*num_points) > num_points/3] = 0
+
+    U_k[abs(k) > N/3] = 0
     U[i,:] = ifft(U_k)
 
 #plotting 
