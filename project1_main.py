@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import pi
 from numpy import cosh, exp, cos, zeros, log10, linspace, sqrt
-from Project1.KDV_FUNCS import KDV_INT,KDV_INT_2, evo_plot
+from Project1.KDV_FUNCS import KDV_INT,KDV_INT_2, evo_plot, quad_interp
 from scipy.signal import argrelextrema
 
 import warnings
@@ -199,7 +199,7 @@ if dx_ac:
 
 
 ### TWO SOLITONS ###
-two_sol = False
+two_sol = True
 if two_sol == True:
     #number of grid points
     N = 400 
@@ -212,9 +212,9 @@ if two_sol == True:
     #time step
     dt = 0.01
     #time steps
-    nsteps = 10000
+    nsteps = int(np.round(10000/1.3))
 
-    ic = soliton(0.7, x, length/2) + soliton(0.25, x, length*(1.1))
+    ic = soliton(0.8, x, length/2) + soliton(0.2, x, length*(1.1))
 
     u = KDV_INT(N, length, dt, nsteps, ic)
 
@@ -222,8 +222,11 @@ if two_sol == True:
     small_pos = zeros(nsteps)
 
     for i in range(nsteps):
+
         ut = u[i,:]
+
         midx = argrelextrema(np.real(ut),np.greater)[0]
+
         my = np.real(ut[midx])
 
         midx = midx[my > 0.01]
@@ -239,19 +242,24 @@ if two_sol == True:
         else:
             bid = midx[0]
             sid = midx[0]
-        big_pos[i] = bid
-        small_pos[i] = sid
+        big_pos[i] = quad_interp(ut,bid)
+        small_pos[i] = quad_interp(ut,sid)
     
 
     time_vals = np.arange(nsteps)*dt
-
+    id_same = small_pos == big_pos
+    joined = big_pos[id_same]
+    joined_time = time_vals[id_same ]
     
-
-    #plt.plot(time_vals, dx*small_pos, c = 'k', LineWidth = 1)
-    #plt.plot(time_vals, dx*big_pos, c = 'b', LineWidth = 1)
-    sample = 100
-    plt.scatter(time_vals[0::sample], dx*small_pos[0::sample], s = 15, c = 'k',marker = 'o', label = 'small peak')
-    plt.scatter(time_vals[0::sample], dx*big_pos[0::sample], s = 25, c = 'b',marker = '*', label = 'big peak')
+    small_pos[id_same ] = np.nan
+    big_pos[id_same ] = np.nan
+    
+    plt.plot(time_vals, dx*small_pos, c = 'k', LineWidth = 1,label = 'small peak')
+    plt.plot(time_vals, dx*big_pos, c = 'b', LineWidth = 1,label = 'big peak')
+    plt.plot(joined_time, dx*joined, c = 'r', LineWidth = 1.3,label = 'joined')
+    sample = 75
+    #plt.scatter(time_vals[0::sample], dx*small_pos[0::sample], s = 15, c = 'k',marker = 'o', label = 'small peak')
+    #plt.scatter(time_vals[0::sample], dx*big_pos[0::sample], s = 25, c = 'b',marker = '*', label = 'big peak')
 
     plt.ylim([0, length])
     plt.xlabel('time')
