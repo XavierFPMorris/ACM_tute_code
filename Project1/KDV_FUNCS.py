@@ -2,21 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from math import pi
 from numpy.fft import fft, fftfreq, ifft
-from numpy import cosh, exp, cos
 from matplotlib.animation import FuncAnimation
-#from .Kdv import KDV
+
 
 def KDV_INT(N, length, dt, nsteps, IC):
     ### SETUP ###
 
-    #grid spacing
-    #dx = length/N 
-
-    #spatial discretisation
-    #x = dx*np.arange(N) 
-
     #wavenumber discretisation
-    k = 2*np.pi*N/length*fftfreq(N) 
+    k = 2*pi*N/length*fftfreq(N) 
 
     ### DERIVATIVE OPERATORS
 
@@ -76,18 +69,12 @@ def evo_plot(x, U, nsteps):
 def KDV_INT_2(N, length, dt, nsteps, IC, beta, alpha, nu):
     ### SETUP ###
 
-    #grid spacing
-    #dx = length/N 
-
-    #spatial discretisation
-    #x = dx*np.arange(N) 
-
     #wavenumber discretisation
     k = 2*np.pi*N/length*fftfreq(N) 
 
     ### DERIVATIVE OPERATORS
 
-    # LINEAR TERM 1 (U_xxx)
+    # LINEAR TERM 1 (beta U_xxx + alpha U_xx + nu U_xxxx)
 
     L_= -beta*(1j*k)**3 -alpha*(1j*k)**2 -nu*(1j*k)**4
 
