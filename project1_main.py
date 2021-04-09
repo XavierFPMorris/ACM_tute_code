@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt 
 import numpy as np
 from math import pi
-from numpy import cosh, exp, cos, zeros, log10, linspace, sqrt
-from Project1.KDV_FUNCS import KDV_INT,KDV_INT_2, evo_plot, quad_interp
+from numpy.fft import fft, fftfreq, ifft
+from numpy import cosh, exp,zeros, log10, linspace, sqrt
+from Project1.KDV_FUNCS import KDV_INT,KDV_INT_2, quad_interp
 from scipy.signal import argrelextrema
-
+plt.rcParams["figure.figsize"] = (8,8)
+plt.rcParams.update({'font.size': 18})
 import warnings
 warnings.filterwarnings("ignore")
-
 
 ### INITIAL CONDITIONS ###
 
@@ -28,6 +29,8 @@ def gaussian(A,B,x,length):
 ### GAUSSIAN AMPLITUDE DEPENDANCE ### 
 gad = False
 if gad:
+    plt.rcParams["figure.figsize"] = (16,10)
+    plt.rcParams.update({'font.size': 12})
     #number of grid points
     N = 400 
     #length of domain
@@ -39,9 +42,9 @@ if gad:
     #time step
     dt = 0.05 
     #time steps
-    nsteps_ar = [0, 100, 300, 1000]
+    nsteps_ar = [0, 100, 400, 1000]
     #values of A to analyse
-    A_ = 0.1*np.arange(5) + 0.05
+    A_ = 0.15*np.arange(5) + 0.05
     B = 0.1
 
     fig, axs = plt.subplots(2,2)
@@ -64,11 +67,13 @@ if gad:
                 u = KDV_INT(N, length, dt, nsteps, ic)
                 leg = "A = {a:.2f}"
                 ax.plot(x, np.real(u[-1,:]),label = leg.format(a = A_[i]))
-        ax.set_title('Gaussian Solution after ' + str(nsteps) + ' steps with dt = ' + str(dt) + ', B = ' + str(B))
-        ax.set_ylim([-0.1, 0.8])
+        ax.set_title('Gaussian Solution after time = ' + str(nsteps*dt))
+        ax.set(xlabel = 'x', ylabel = 'u')
+        ax.set_ylim([-0.1, 1])
         ax.legend(loc="upper left")
     plt.suptitle('Gaussian Long Time Dependance on initial amplitude')
     plt.show()
+    
 
 
 ### ACCURACY ###
@@ -76,6 +81,8 @@ if gad:
 ## DT ##
 dt_ac = False 
 if dt_ac:
+    plt.rcParams["figure.figsize"] = (9,9)
+    plt.rcParams.update({'font.size': 16})
     #number of grid points
     N = 400 
     #length of domain
@@ -132,17 +139,18 @@ if dt_ac:
 ## DX ##
 dx_ac = False
 if dx_ac:
+    plt.rcParams["figure.figsize"] = (9,9)
+    plt.rcParams.update({'font.size': 16})
     #number of grid points
     N = np.round(np.logspace(2,5,10))
     #length of domain
     length = 100
     #grid spacing
-    dx = length/N 
-    print(dx)
+    dx = length/N
     #time step
-    dt = 0.01
+    dt = 0.05
     #time steps
-    nsteps = 100
+    nsteps = 1000
     #array to store RMS error
     er = zeros(len(N))
 
@@ -167,6 +175,7 @@ if dx_ac:
     fig, ax = plt.subplots(1,1)
     #plot results
     ax.loglog(dx, er, 'ob')
+    #ax.loglog(dx, (dx-0.1)**(-2))
 
     plot_text = "Slope = {s:.2f}"
 
@@ -199,7 +208,7 @@ if dx_ac:
 
 
 ### TWO SOLITONS ###
-two_sol = True
+two_sol = False
 if two_sol == True:
     #number of grid points
     N = 400 
@@ -212,11 +221,41 @@ if two_sol == True:
     #time step
     dt = 0.01
     #time steps
-    nsteps = int(np.round(10000/1.3))
+    nsteps = int(np.round(10000/1.2))
 
-    ic = soliton(0.8, x, length/2) + soliton(0.2, x, length*(1.1))
+    ic = soliton(0.55, x, length/2) + soliton(0.18, x, length*(0.9))
+
+    #initial plot
+    plt.plot(x, ic)
+    plt.xlabel('x')
+    plt.ylabel('u')
+    plt.ylim([0, 0.3])
+    plt.title('Initial 2 Soliton Condition, c = 0.55, 0.18')
+    plt.show()
 
     u = KDV_INT(N, length, dt, nsteps, ic)
+
+    #merge plots
+    plt.rcParams["figure.figsize"] = (14,10)
+    plt.rcParams.update({'font.size': 10})
+    times = (np.round(linspace(20, 60, 8)))
+    for i in range(len(times)): 
+        step = int(times[i]/dt)
+        ax = plt.subplot(4,2,i+1)
+        ax.plot(x, u[step, :])#, label = 't = '+str(times[i]))
+        ax.set_xlabel('x')
+        ax.set_title('t = '+str(times[i]))
+        ax.set_ylabel('u')
+        ax.set_ylim([0, 0.3])
+        #plt.legend(loc = 'upper left')
+    plt.suptitle('Merging of two soliton solutions')
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=.5)
+    plt.show()
+
+    plt.rcParams["figure.figsize"] = (8,8)
+    plt.rcParams.update({'font.size': 18})
+
+    #evo_plot(x,u,nsteps)
 
     big_pos = zeros(nsteps)
     small_pos = zeros(nsteps)
@@ -254,9 +293,9 @@ if two_sol == True:
     small_pos[id_same ] = np.nan
     big_pos[id_same ] = np.nan
     
-    plt.plot(time_vals, dx*small_pos, c = 'k', LineWidth = 1,label = 'small peak')
-    plt.plot(time_vals, dx*big_pos, c = 'b', LineWidth = 1,label = 'big peak')
-    plt.plot(joined_time, dx*joined, c = 'r', LineWidth = 1.3,label = 'joined')
+    plt.plot(time_vals, dx*small_pos, c = 'k', LineWidth = 1.5,label = 'small peak')
+    plt.plot(time_vals, dx*big_pos, c = 'b', LineWidth = 1.5,label = 'big peak')
+    plt.plot(joined_time, dx*joined, c = 'r', LineWidth = 1.8,label = 'joined')
     sample = 75
     #plt.scatter(time_vals[0::sample], dx*small_pos[0::sample], s = 15, c = 'k',marker = 'o', label = 'small peak')
     #plt.scatter(time_vals[0::sample], dx*big_pos[0::sample], s = 25, c = 'b',marker = '*', label = 'big peak')
@@ -267,7 +306,32 @@ if two_sol == True:
     plt.legend(loc = 'lower right')
     plt.title('Position of peaks as time evolves')
     plt.show()
-        
+
+    # Plot predictions
+
+    coeffs_s = np.polyfit(time_vals[0:100], small_pos[0:100],1)
+    polyn_s = np.poly1d(coeffs_s)
+    fit_s = polyn_s(time_vals)
+    
+    coeffs_b = np.polyfit(time_vals[0:100], big_pos[0:100],1)
+    polyn_b = np.poly1d(coeffs_b)
+    fit_b = polyn_b(time_vals)
+
+    plt.plot(time_vals, dx*small_pos, c = 'k', LineWidth = 1.5,label = 'small peak')
+    plt.plot(time_vals, dx*big_pos, c = 'b', LineWidth = 1.5,label = 'big peak')
+    plt.plot(joined_time, dx*joined, c = 'r', LineWidth = 1.8,label = 'joined')
+    plt.plot(time_vals, fit_s*dx,  '--k', label = 'small peak prediction')
+    plt.plot(time_vals, fit_b*dx,  '--b',label = 'large peak prediction')
+    sample = 75
+    #plt.scatter(time_vals[0::sample], dx*small_pos[0::sample], s = 15, c = 'k',marker = 'o', label = 'small peak')
+    #plt.scatter(time_vals[0::sample], dx*big_pos[0::sample], s = 25, c = 'b',marker = '*', label = 'big peak')
+
+    plt.ylim([0, length])
+    plt.xlabel('time')
+    plt.ylabel('x')
+    plt.legend(loc = 'lower right')
+    plt.title('Linear Peak Predictions')
+    plt.show()
 
     #evo_plot(x,u,nsteps)
     #print(ic[argrelextrema(ic,np.greater)[0]])
@@ -276,6 +340,90 @@ if two_sol == True:
 ### Kuramoto-Sivashinsky ###
 Ku_Si = False
 if Ku_Si:
+    plt.rcParams["figure.figsize"] = (20,10)
+    plt.rcParams.update({'font.size': 12})
+    #number of grid points
+    N = 400 
+    #length of domain
+    length = 100
+    #grid spacing
+    dx = length/N 
+    #spatial discretisation
+    x = dx*np.arange(N) 
+    #time step
+    dt = 0.05
+    #time steps
+    nsteps = 10000
+
+    #initial condition
+    ic = 0.1*np.sin(2*np.pi/length*x)
+    #ic = gaussian(0.1, 0.1, x, length)
+    ic = soliton(0.5, x, length)
+
+    #beta
+    beta = 0
+    
+    i_alpha = 0.1
+    # alpha = linspace(0.5, 2*pi/0.5, 5)
+    #nu to set first k* to be 2pi/L
+    nu = i_alpha*(length**2/8/pi**2)
+    #array of alpha to analyse
+    alpha = 2*nu*(np.arange(1,4.5,0.5)*2*pi/length)**2
+    
+
+    #plot initial condition
+    ax = plt.subplot(4,2,1)
+
+    ax.plot(x, ic, label = 'Initial')
+    ax.set(title = 'Initial condition', xlabel = 'x', ylabel ='u')
+
+    #integrate for each alpha
+    for i in range(len(alpha)):
+        u = KDV_INT_2(N,length, dt, nsteps, ic, beta, alpha[i], nu)
+        lab = r'$\alpha$ = {a:.2f}, $k^*$= {k:.1f}($2\pi/L$)'
+        ax = plt.subplot(4,2,i+2)
+        ax.plot(x, u[-1,:])
+        ax.set(title = lab.format(a = alpha[i], k = sqrt(alpha[i]/2/nu) * length/2/np.pi), xlabel = 'x', ylabel = 'u')
+    tit = r'Soliton Solutions of Kuramoto-Sivashinsky PDE, t = {t:.1f}, $\nu$ = {nu_:.2f}'
+    plt.suptitle(tit.format(t = nsteps*dt, nu_ = nu))
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.3, hspace=.5)
+    plt.show()
+  
+    #Plotting chaotic divergence of sin perturbations
+    chaos = False
+    if chaos:
+        ic1 = 0.01*np.sin(2*np.pi/length*x)
+        ic2 = 0.02*np.sin(2*np.pi/length*x)
+        ic3 = 0.03*np.sin(2*np.pi/length*x)
+        ic4 = 0.04*np.sin(2*np.pi/length*x)
+        u1 = KDV_INT_2(N,length, dt, nsteps, ic1, beta, alpha[-1], nu)
+        u2 = KDV_INT_2(N,length, dt, nsteps, ic2, beta, alpha[-1], nu)
+        u3 = KDV_INT_2(N,length, dt, nsteps, ic3, beta, alpha[-1], nu)
+        u4 = KDV_INT_2(N,length, dt, nsteps, ic4, beta, alpha[-1], nu)
+
+        fig, (ax1, ax2) = plt.subplots(2,1)
+
+        ax1.plot(x,ic1, label = 'A = 0.01')
+        ax1.plot(x,ic2, label = 'A = 0.02')
+        ax1.plot(x,ic3, label = 'A = 0.03')
+        ax1.plot(x,ic4, label = 'A = 0.04')
+        ax1.set(title = 'Initial conditions', xlabel = 'x', label = 'u', ylim = [-0.3, 0.3])
+        ax1.legend(loc = 'upper left')
+        ax2.plot(x, u1[-1,:], label = 'A = 0.01')
+        ax2.plot(x, u2[-1,:], label = 'A = 0.02')
+        ax2.plot(x, u3[-1,:], label = 'A = 0.03')
+        ax2.plot(x, u4[-1,:], label = 'A = 0.04')
+        ax2.set(title = 'Evolution after t = 500', xlabel = 'x', label = 'u', ylim = [-0.3, 0.3])
+        ax2.legend(loc = 'upper left')
+        plt.show()
+
+    
+
+### Kawahara-Toh ###
+Ka_To = False
+if Ka_To:
+    plt.rcParams["figure.figsize"] = (20,10)
+    plt.rcParams.update({'font.size': 12})
     #number of grid points
     N = 400 
     #length of domain
@@ -290,33 +438,111 @@ if Ku_Si:
     nsteps = 10000*2
 
     #initial condition
-    ic = 0.1*np.sin(2*np.pi/length*x)
+    ic = 0.1*np.sin(2*2*np.pi/length*x)
+    ic = soliton(0.2, x, length)
 
-    #beta
-    beta = 0
-    #array of alpha to analyse
-    alpha = linspace(0.1, 2, 5)
-    #nu to set first k* to be 2pi/L
-    nu = 0.1*(length**2/8/pi**2)
-
+    #array of beta to analyse
+    beta = linspace(0.3, 2, 7)
+    #alpha
+    alpha = .1
+    #nu to set k* to 20pi/L
+    nu = alpha*(length**2/8/pi**2)/10**2
     #plot initial condition
-    plt.plot(x, ic, label = 'Initial')
+    #plt.plot(x, ic, label = 'Initial')
 
-    #integrate for each alpha
-    for i in range(len(alpha)):
-        u = KDV_INT_2(N,length, dt, nsteps, ic, beta, alpha[i], nu)
-        lab = r'$\alpha$ = {a:.2f} $k^*$ = {k:.2f}'
-        plt.plot(x, u[-1,:], label = lab.format(a = alpha[i], k = sqrt(alpha[i]/2/nu)))
-    plt.legend(loc = 'upper left')
+    ax = plt.subplot(4,2,1)
+
+    ax.plot(x, ic, label = 'Initial')
+    ax.set(title = 'Initial condition', xlabel = 'x', ylabel ='u')
+
+    #integrate for each beta
+    for i in range(len(beta)):
+        u = KDV_INT_2(N,length, dt, nsteps, ic, beta[i], alpha, nu)
+        lab = r'$\beta$ = {a:.2f} $k^*$= {k:.1f}($2\pi/L$)'
+        ax = plt.subplot(4,2,i+2)
+        ax.plot(x, u[-1,:])
+        ax.set(title = lab.format(a = beta[i], k = sqrt(alpha/2/nu) * length/2/np.pi), xlabel = 'x', ylabel = 'u')
+    tit = r'Soliton Solutions of Kawahara-Toh PDE, t = {t:.1f}, $\nu$ = {nu_:.2f}, $\alpha$ = {a:.2f}'
+    plt.suptitle(tit.format(t = nsteps*dt, nu_ = nu, a = alpha))
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=.5)
+    plt.show()
+
+    #time evo of sine beta = 0.3
+    tm_evo_sin = False
+    if tm_evo_sin:
+        ic = 0.1*np.sin(2*2*np.pi/length*x)
+        beta = 0.3
+        u = KDV_INT_2(N,length, dt, nsteps, ic, beta, alpha, nu)
+        times = [10000, 11000, 12000]
+        for i in range(len(times)):
+            plt.plot(x, u[times[i],:], label = 't = ' + str(times[i]*dt))
+        plt.title('Evolution of sin for beta = 0.3')
+        plt.legend(loc = 'upper left')
+        plt.xlabel('x')
+        plt.ylabel('u')
+        plt.show()
+
+
+### TESTING
+
+## UNIT OPERATOR TEST 
+un_op_test = False
+if un_op_test:
+    #number of grid points
+    N = 400 
+    #length of domain
+    length = 10
+    #grid spacing
+    dx = length/N 
+    #spatial discretisation
+    x = dx*np.arange(N) 
+
+    #wavenumber discretisation
+    k = 2*pi*N/length*fftfreq(N) 
+
+    # LINEAR TERM (U_xxx)
+    L_= -(1j*k)**3
+
+    # NON-LINEAR TERM (6UU_x)
+    def N_(u):
+        return -6*0.5*1j*k*fft(u**2)
+
+    #initial condition
+    ic = np.sin(2*np.pi/length*x)
+
+    #analytical U_xxx
+    L_anal = (8*pi**3*np.cos((2*pi*x)/length))/length**3
+
+    #numerical U_xxx
+    L_num = 1*ifft(L_*fft(ic))
+
+    #compare plots
+    plt.plot(x, L_anal,'r', LineWidth = 4, label = 'Analytical')
+    plt.plot(x, L_num, '--k', LineWidth = 2, label = 'Numerical')
+    plt.legend(loc = 'upper right')
     plt.xlabel('x')
     plt.ylabel('u')
-    plt.title('Long time solution of Kuramoto-Sivashinsky PDE with Small sine perturbation IC')
+    plt.title('L: Numerical vs Analytical')
     plt.show()
-    
 
-### Kawahara-Toh ###
-Ka_To = False
-if Ka_To:
+    #analytical UU_x
+    N_anal = -12*pi/length * np.cos((2*pi*x)/length)*np.sin((2*pi*x)/length)
+
+    #numerical UU_x
+    N_num = ifft(N_(ic))
+
+    #compare plots
+    plt.plot(x, N_anal,'r', LineWidth = 4, label = 'Analytical')
+    plt.plot(x, N_num, '--k', LineWidth = 2, label = 'Numerical')
+    plt.legend(loc = 'upper right')
+    plt.xlabel('x')
+    plt.ylabel('u')
+    plt.title('N: Numerical vs Analytical')
+    plt.show()
+
+## INTEGRATED SOLITON TEST
+sol_test = False
+if sol_test:
     #number of grid points
     N = 400 
     #length of domain
@@ -325,30 +551,40 @@ if Ka_To:
     dx = length/N 
     #spatial discretisation
     x = dx*np.arange(N) 
-    #time step
+    #timestep 
     dt = 0.05
-    #time steps
-    nsteps = 10000*10
+    #number of steps
+    nsteps = 1001
 
-    #initial condition
-    ic = 0.1*np.sin(2*2*np.pi/length*x)
+    #first soliton
+    ic1 = soliton(0.5, x, length/2)
+    #second soliton
+    ic2 = soliton(1, x, length/2)
 
-    #array of beta to analyse
-    beta = linspace(0.3, 4, 5)
-    #alpha
-    alpha = 0.1
-    #nu to set k* to 20pi/L
-    nu = alpha*(length**2/8/pi**2)/10**2
-    #plot initial condition
-    plt.plot(x, ic, label = 'Initial')
+    #integrate the two initial conditions
+    u1 = KDV_INT(N, length, dt, nsteps, ic1)
+    u2 = KDV_INT(N, length, dt, nsteps, ic2)
 
-    #integrate for each beta
-    for i in range(len(beta)):
-        u = KDV_INT_2(N,length, dt, nsteps, ic, beta[i], alpha, nu)
-        lab = r'$\beta$ = {a:.2f} $k^*$ = {k:.2f}'
-        plt.plot(x, u[-1,:], label = lab.format(a = beta[i], k = sqrt(alpha/2/nu)))
+    #plot 1st ic
+    plt.plot(x, ic1, label = 't = 0')
+    times = [100, 300, 600, 1000]
+    for t in times:
+        plt.plot(x, u1[t,:], label = 't = ' + str(t*dt))
     plt.legend(loc = 'upper left')
     plt.xlabel('x')
     plt.ylabel('u')
-    plt.title('Long time solution of Kawahara-Toh PDE with Small sine perturbation IC')
+    plt.ylim([-0.05, 0.8])
+    plt.title('Soliton evolution, c = 0.5')
+    plt.show()
+
+    #plot 2nd ic
+    plt.plot(x, ic2, label = 't = 0')
+    times = [100, 300, 600, 1000]
+    for t in times:
+        plt.plot(x, u2[t,:], label = 't = ' + str(t*dt))
+    plt.legend(loc = 'upper left')
+    plt.xlabel('x')
+    plt.ylabel('u')
+    plt.title('Soliton evolution, c = 1')
+    plt.ylim([-0.05, 0.8])
     plt.show()
