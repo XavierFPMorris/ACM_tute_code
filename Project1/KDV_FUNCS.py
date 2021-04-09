@@ -71,6 +71,7 @@ def KDV_INT_2(N, length, dt, nsteps, IC, beta, alpha, nu):
 
     #wavenumber discretisation
     k = 2*np.pi*N/length*fftfreq(N) 
+    #k = 2*np.pi*fftfreq(N, d=length/N) 
 
     ### DERIVATIVE OPERATORS
 
@@ -90,10 +91,12 @@ def KDV_INT_2(N, length, dt, nsteps, IC, beta, alpha, nu):
 
 ### QUAD INTERP HELPER
 def quad_interp(ut, ind):
+    #find the indices and values of points surrounding the discrete maximum
     x_1 = ind - 1
     x = ind
     x1 = ind + 1
     u_1 = ut[x_1]
     u = ut[x]
     u1 = ut[x1]
+    #return the adjusted maximum x value
     return x - (u1 - u_1)/(2*(u1 - 2*u + u_1))
