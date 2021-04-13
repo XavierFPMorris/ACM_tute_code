@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -17,9 +18,10 @@ t = np.arange(tmin,tmax+dt, dt)
 
 x = np.zeros(len(t))
 
-for i in range(len(x)):
-    x[i] = sig*np.random.normal(0,t[i])
+for i in range(1,len(x)):
+    x[i] = x[i-1] + np.random.normal(0,dt)
 
+x*= sig
 plt.plot(t,x)
 # %%
 ### dt = 0.01
@@ -29,9 +31,10 @@ t = np.arange(tmin,tmax+dt, dt)
 
 x = np.zeros(len(t))
 
-for i in range(len(x)):
-    x[i] = sig*np.random.normal(0,t[i])
+for i in range(1,len(x)):
+    x[i] = x[i-1] + np.random.normal(0,dt)
 
+x*= sig
 plt.plot(t,x)
 # %%
 ### dt = 0.001
@@ -41,15 +44,29 @@ t = np.arange(tmin,tmax+dt, dt)
 
 x = np.zeros(len(t))
 
-for i in range(len(x)):
-    x[i] = sig*np.random.normal(0,t[i])
+for i in range(1,len(x)):
+    x[i] = x[i-1] + np.random.normal(0,dt)
 
+x*= sig
 plt.plot(t,x)
 
 # %%
-t = 0.5
-Xt = sig*np.random.normal(0,t,(1000,1))
-print(sig**2*t - np.var(Xt))
-Yt = 2*np.random.normal(0,5,(1000,1))
-print(np.var(Yt))
+dt = 0.001
+t = np.arange(tmin,tmax+dt, dt)
+C = 10000
+X = np.zeros((len(t), C))
+
+for k in range(C):
+    for i in range(1,len(t)):
+        X[i,k] = X[i-1,k] + np.random.normal(0,dt)
+X *= sig
+vars = np.copy(t)
+for i in range(len(t)):
+    vars[i] = np.var(X[i,:])
+
+plt.plot(t,vars)
+print(sig**2*dt)
+print(vars[-1])
+# %%
+print(sig**2*dt)
 # %%
