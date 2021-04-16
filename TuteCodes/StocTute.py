@@ -53,19 +53,19 @@ plt.plot(t,x)
 # %%
 dt = 0.001
 t = np.arange(tmin,tmax+dt, dt)
-C = 10000
+C = 1000
 X = np.zeros((len(t), C))
 
 for k in range(C):
     for i in range(1,len(t)):
-        X[i,k] = X[i-1,k] + np.random.normal(0,dt)
+        X[i,k] = X[i-1,k] + np.random.normal(0,np.sqrt(dt))
 X *= sig
 vars = np.copy(t)
 for i in range(len(t)):
     vars[i] = np.var(X[i,:])
 
 plt.plot(t,vars)
-print(sig**2*dt)
+print(sig**2)
 print(vars[-1])
 # %%
 print(sig**2*dt)
