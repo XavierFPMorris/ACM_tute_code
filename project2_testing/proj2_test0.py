@@ -32,67 +32,142 @@ m = np.array([[1.00000597682],
 
 #initial momentum
 p = m*v
-print(p)
 
 #%%
-#time stepping constraints
-h = 10
-time = 200000
-nsteps = int(time/h)
+# #time stepping constraints
+# h = 10
+# time = 200000
+# nsteps = int(time/h)
 
-#Set up tensors to store Q, P
-Q = np.zeros((6,3,int(nsteps)))
-P = np.zeros((6,3,int(nsteps)))
+# #Set up tensors to store Q, P
+# Q = np.zeros((6,3,int(nsteps)))
+# P = np.zeros((6,3,int(nsteps)))
 
-#apply initial conditions
-Q[:,:,0] = q
-P[:,:,0] = p
+# #apply initial conditions
+# Q[:,:,0] = q
+# P[:,:,0] = p
 
 #Gravity constant
 G = 2.95912208286*10**(-4)
 #%%
-def d_pH(i,t):
+#partial functions
+def d_pH(i,t,P):
     return P[i,:,t]/m[i]
 
-def d_qH(i,t):
+def d_pH_(p_,i):
+    return p_/m[i]
+
+def d_qH(i,t,Q):
     temp = np.zeros((1,3))
-    for j in range(6):
-        if j != i:
+    for j in range(i):
+        if j!=i:
             temp += -G*m[i]*m[j]*(Q[j,:,t] - Q[i,:,t])\
                 /(np.linalg.norm(Q[i,:,t]-Q[j,:,t])**3)
     return temp
 
 
 #%%
-for t in range(1,nsteps):
-    for i in range(6):
-        P[i,:,t] = P[i,:,t-1] - h*d_qH(i,t-1)
-        Q[i,:,t] = Q[i,:,t-1] + h*d_pH(i,t)
+#Symp Euler
+def SE(nsteps,h):
+    Q = np.zeros((6,3,int(nsteps)))
+    P = np.zeros((6,3,int(nsteps)))
+    Q[:,:,0] = q.copy()
+    P[:,:,0] = p.copy()
+    for t in range(1,nsteps):
+        for i in range(6):
+            P[i,:,t] = P[i,:,t-1] - h*d_qH(i,t-1,Q)
+            Q[i,:,t] = Q[i,:,t-1] + h*d_pH(i,t,P)
+    return Q,P
 #%%
-# for t in range(1,nsteps):
-#     for i in range(6):
-#         Q[i,:,t] = Q[i,:,t-1] + h*d_pH(i,t-1)
-#         P[i,:,t] = P[i,:,t-1] - h*d_qH(i,t-1)
-#%%
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-ax.plot3D(Q[0,0,:], Q[0,1,:],Q[0,2,:])
-ax.plot3D(Q[1,0,:], Q[1,1,:],Q[1,2,:])
-ax.plot3D(Q[2,0,:], Q[2,1,:],Q[2,2,:])
-ax.plot3D(Q[3,0,:], Q[3,1,:],Q[3,2,:])
-ax.plot3D(Q[4,0,:], Q[4,1,:],Q[4,2,:])
-ax.plot3D(Q[5,0,:], Q[5,1,:],Q[5,2,:])
-#ax.plot3D(Q[6,0,:], Q[6,1,:],Q[6,2,:])
-
-plt.show()
-
-
+#Forward Euler
+def FE(nsteps,h):
+    Q = np.zeros((6,3,int(nsteps)))
+    P = np.zeros((6,3,int(nsteps)))
+    Q[:,:,0] = q.copy()
+    P[:,:,0] = p.copy()
+    for t in range(1,nsteps):
+        for i in range(6):
+            Q[i,:,t] = Q[i,:,t-1] + h*d_pH(i,t-1,P)
+            P[i,:,t] = P[i,:,t-1] - h*d_qH(i,t-1,Q)
+    return Q,P
 
 #%%
+#Stormer-Verlet
+def SV(nsteps,h):
+    Q = np.zeros((6,3,int(nsteps)))
+    P = np.zeros((6,3,int(nsteps)))
+    Q[:,:,0] = q.copy()
+    P[:,:,0] = p.copy()
+    for t in range(1,nsteps):
+        for i in range(6):
+            p_temp = P[i,:,t-1] - h*0.5*d_qH(i,t-1,Q)
+            Q[i,:,t] = Q[i,:,t-1] + h*d_pH_(p_temp,i)
+            P[i,:,t] = p_temp - h*0.5*d_qH(i,t,Q)
+    return Q,P
+#%%
+# Plotting functions
+def plot_orbits(Q):
+    plt.rcParams["figure.figsize"] = (12,12)
+    plt.rcParams.update({'font.size': 16})
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot3D(Q[0,0,:], Q[0,1,:],Q[0,2,:])
+    ax.plot3D([0],[0],[0],'*',label = 'Sun')
+    ax.plot3D(Q[1,0,:], Q[1,1,:],Q[1,2,:],label = 'Jupiter')
+    ax.plot3D(Q[2,0,:], Q[2,1,:],Q[2,2,:],label = 'Saturn')
+    ax.plot3D(Q[3,0,:], Q[3,1,:],Q[3,2,:],label = 'Uranus')
+    ax.plot3D(Q[4,0,:], Q[4,1,:],Q[4,2,:],label = 'Neptune')
+    ax.plot3D(Q[5,0,:], Q[5,1,:],Q[5,2,:],label = 'Pluto')
+    ax.set(xlabel  = 'x (AU)',ylabel = 'y (AU)', zlabel = 'z (AU)')
+    ax.legend(loc = 'best')
+    ax.set_aspect('auto')
+    plt.show()
+#phase portrait plot
+def port_plot(Q):
+    plt.rcParams["figure.figsize"] = (12,12)
+    plt.rcParams.update({'font.size': 16})
+    #fig,ax = plt.figure()
+    y = np.roll(Q[1,0,:],1)
+    x = Q[1,0,:]
+    plt.plot(x[1:],y[1:])
+    plt.xlabel('x(n)')
+    plt.ylabel('x(n+1)')
+    plt.show()
+#%%
+# Plot FE
+h = 10
+time = 200000
+nsteps = int(time/h)
+
+
+Q,P = FE(nsteps,h)
+plot_orbits(Q)
+
+#%%
+# Plot SE
+h = 10
+time = 2000000
+nsteps = int(time/h)
+
+
+Q,P = SE(nsteps,h)
+plot_orbits(Q)
+
+#%%
+# Plot SV
+h = 10
+time = 2000000
+nsteps = int(time/h)
+
+Q,P = SV(nsteps,h)
+plot_orbits(Q)
+
+#%%
+#Calculate H (energy)
 def H(q,p):
     temp1 = 0
     for i in range(6):
-        temp1 += 0.5*m[i]*(np.dot(p[i,:], p[i,:]))
+        temp1 += 0.5/m[i]*(np.dot(p[i,:], p[i,:]))
     
     for i in range(1,6):
         temp2 = 0
@@ -100,11 +175,89 @@ def H(q,p):
             temp2 += -G*m[i]*m[j]/np.linalg.norm(q[i,:]-q[j,:])
         temp1 += temp2
     return temp1
+#%%
+#simple H plot
+plt.rcParams["figure.figsize"] = (12,6)
+plt.rcParams.update({'font.size': 10})
+h = 10
+time = 200000
+nsteps = int(time/h)
+plt.subplot(1,3,1)
+Q,P = FE(nsteps,h)
 H_vec = np.zeros(nsteps)
 for i in range(nsteps):
     H_vec[i] = H(Q[:,:,i], P[:,:,i])
-
 plt.plot(H_vec)
+plt.title('Forward Euler')
+plt.xlabel('timestep')
+plt.ylabel('H')
+plt.subplot(1,3,2)
+Q,P = SE(nsteps,h)
+H_vec = np.zeros(nsteps)
+for i in range(nsteps):
+    H_vec[i] = H(Q[:,:,i], P[:,:,i])
+plt.plot(H_vec)
+plt.title('Symp Euler')
+plt.xlabel('timestep')
+plt.ylim([-3.21e-8,-3.22e-8])
+#plt.ylabel('H')
+plt.subplot(1,3,3)
+Q,P = SV(nsteps,h)
+H_vec = np.zeros(nsteps)
+for i in range(nsteps):
+    H_vec[i] = H(Q[:,:,i], P[:,:,i])
+plt.plot(H_vec)
+plt.title('Stormer-Verlet')
+plt.xlabel('timestep')
+plt.ylim([-3.21e-8,-3.22e-8])
+#plt.ylabel('H')
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.3, hspace=.5)
 plt.show()
+#%%
+from numpy import log10
+# %%
+#calculate order with h
+def order_calc(f,N):
+    #time steps to look at
+    hs = np.logspace(0,1,num=N)+5
+    time = 20000
+    #initial H value
+    H_0 = H(q,p)
+    er = np.zeros(N)
+    # for each time step, integrate and calculate the RMS of H
+    for i in range(N):
+        h = hs[i]
+        nsteps = 2500#int(time/h)
+        #Q,P = FE(nsteps,h)
+        Q,P = f(nsteps,h)
+        H_vec = np.zeros(nsteps)
+        for j in range(nsteps):
+            H_vec[j] = H(Q[:,:,j], P[:,:,j])
+        res = np.ones(nsteps)*H_0 - H_vec
+        er[i] = np.sqrt(np.mean(res**2))
+    fig, ax = plt.subplots(1,1)
+    ax.loglog(hs,er,'ob')
 
+    ## FITTING
+    plot_text = "Slope = {s:.2f}"
+    #calculate fit
+    log_slope, log_intercept = np.polyfit(log10(hs), log10(er), 1)
+    coeffs = np.polyfit(log10(hs), log10(er),1)
+    polyn = np.poly1d(coeffs)
+    log10_fit = polyn(log10(hs))
+    #plot fit
+    ax.loglog(hs, 10**log10_fit, '-r')
+    ax.text(hs[5], 10**(log10_fit[5])  , plot_text.format(s = log_slope), horizontalalignment='right', c = 'r')
+
+    ax.set(xlabel = 'h', ylabel = 'RMS(H)', title = 'RMS of H as a function of h, log axes')
+    plt.show()
+# %%
+#FE order
+order_calc(FE,10)
+#%%
+#SE order
+order_calc(SE,10)
+# %%
+#SV order
+order_calc(SV,10)
 # %%
