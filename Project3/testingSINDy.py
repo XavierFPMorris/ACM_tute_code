@@ -161,7 +161,6 @@ def print_eq(combos, Xi):
         for j in range(len(current_coeffs)):
             if current_coeffs[j] != 0:
                 c = combos[j]
-                #s +=  '{:.2g}*x^{}*y^{}*z^{}'.format(current_coeffs[j],c[0],c[1],c[2]) + ' + '
                 s += '{:.3g}'.format(current_coeffs[j]) + 'x'*c[0] + 'y'*c[1] + 'z'*c[2] + ' + '
         print(s[:-2])
 # %%
@@ -186,5 +185,53 @@ print_eq(combos,Xi_new)
 
 
 # %%
-print('x'*0)
+# lets test our found equation vs the given data 
+
+#diff func for found equation
+def whoami_diff(t,vals):
+    x,y,z = vals[0],vals[1],vals[2]
+    return [ -y -z ,x + 0.1*y,  0.1 -18*z + x*y]
+
+
+# %%
+dt = 0.02
+N = 10000
+initial_state_new = X_new[0]
+t0 = 0
+t_bound = dt*N
+
+#create solver object
+solver_obj_new = DOP853(whoami_diff,t0,initial_state_new,t_bound,max_step=dt, first_step=dt)
+
+#set up data matrix
+X_new_gen = np.zeros((N+1,3))
+X_new_gen[0] = initial_state_new
+#%%
+#compute output
+for i in range(N):
+    solver_obj_new.step()
+    X_new_gen[i+1] = solver_obj_new.y
+#%%
+#plot the phase space (attractor)
+plt.rcParams["figure.figsize"] = (12,12)
+plt.rcParams.update({'font.size': 16})
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.plot3D(X_new[:,0],X_new[:,1],X_new[:,2], lw = 1, label = 'real trajectory')
+ax.plot3D(X_new_gen[:,0],X_new_gen[:,1],X_new_gen[:,2], lw = .4, label = 'reconstructed trajectory')
+ax.legend(loc = 'best')
+plt.show()
+# %%
+# lets check the actual time series in each dimension 
+times = np.arange(0,dt*N+dt,dt)
+tits = ['x','y','z']
+for i in range(3):
+    plt.subplot(3,1,i+1)
+    plt.plot(times, X_new[:,i],'k', lw = 2)
+    plt.plot(times, X_new_gen[:,i],'--r', lw = 1)
+    plt.xlabel('time')
+    plt.ylabel(tits[i])
+
+# %%
+
 # %%
