@@ -6,4 +6,5 @@ marias.py
 *.pyc
 *.json
 *.zip
+*.csv
 project2_testing/jlplttest.jl
