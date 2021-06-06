@@ -331,6 +331,21 @@ for i,dt in enumerate(dts):
     dt_errs[i] = auto_test_Lorenz63(dt,N,lam, FD_deriv_8th, initial_state, combos, noise, False)
 plt.plot(dts,dt_errs, '-*k')
 plt.xlabel('dt')
+plt.ylabel('Error')
+#%%
+# N ERROR
+Ns = np.linspace(1000,20000,10)
+N_errs = np.zeros(len(Ns))
+initial_state = [2,5,10]
+lam = 0.025
+noise = 0
+dt =0.02
+for i,N in enumerate(Ns):
+    print(N)
+    N_errs[i] = auto_test_Lorenz63(dt,int(N),lam, FD_deriv_2nd, initial_state, combos, noise, False)
+plt.plot(Ns,N_errs, '-*k')
+plt.xlabel('N')
+plt.ylabel('Error')
 #%%
 # Different library functions
 # First just higher powers (up to 6)
