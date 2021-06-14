@@ -81,17 +81,7 @@ X_dot_approx[:,0] = FD_deriv_2nd(X[:,0],dt)
 X_dot_approx[:,1] = FD_deriv_2nd(X[:,1],dt)
 X_dot_approx[:,2] = FD_deriv_2nd(X[:,2],dt)
 
-#%%
-# plot to compare derivatives
-st = 3200
-en = 3250
-plt.plot(X_dot[st:en,0],lw = 3, label = 'Analytic')
-plt.plot(FD_deriv_2nd(X[st:en,0],dt),label = '2nd O')
-plt.plot(FD_deriv_3rd(X[st:en,0],dt),label = '3rd O')
-plt.plot(FD_deriv_8th(X[st:en,0],dt),label = '8th O')
-plt.ylabel('x`')
-plt.xlabel('t')
-plt.legend(loc = 'best')
+
 #%%
 #Check derivatives are close
 print(np.mean(np.abs(X_dot - X_dot_approx)))
@@ -455,7 +445,17 @@ Xi_Lorenz_FD_4th_Noise = xlstsq(Theta_Noise,X_dot_approx_4th_Noise)
 Xi_Lorenz_FD_4th_Noise = STLS(0.025, Xi_Lorenz_FD_4th_Noise,X_dot_approx_4th_Noise,Theta_Noise)
 print_eq(combos,Xi_Lorenz_FD_4th_Noise)
 
-
+#%%
+# plot to compare derivatives
+st = 3200
+en = 3250
+plt.plot(X_dot[st:en,0],lw = 3, label = 'Analytic')
+plt.plot(FD_deriv_2nd(X[st:en,0],dt),label = '2nd O')
+plt.plot(FD_deriv_3rd(X[st:en,0],dt),label = '3rd O')
+plt.plot(FD_deriv_8th(X[st:en,0],dt),label = '8th O')
+plt.ylabel('x`')
+plt.xlabel('t')
+plt.legend(loc = 'best')
 # Not great, lets try the 8th order derivative
 
 
